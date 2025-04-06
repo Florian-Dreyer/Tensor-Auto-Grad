@@ -2,9 +2,7 @@ import numpy as np
 import math
 
 class Tensor:
-    '''A simple tensor class that supports basic operations.
-    product of shape must match length of data
-    '''
+    '''A simple tensor class that supports basic operations.'''
 
     def __init__(self, data: np.ndarray, dtype: np.dtype, requires_grad: bool, shape: tuple, _grads: np.ndarray = None, _children: set = (), _op: str = ''):
         self.data = self.__set_data(data, dtype, shape, _grads)
@@ -24,10 +22,10 @@ class Tensor:
         '''Performs elementwise addtion for the two given tensors.
 
         Args:
-            TODO
+            other (Tensor): Other Tensor to be added to self, needs to have same shape.
 
         Returns:
-            TODO
+            New Tensor object with the sum of self and other.
 
         Raises:
             ValueError if the shape of other does not match the tensors shape
@@ -57,13 +55,10 @@ class Tensor:
         '''Performs elementwise multiplication on the tensor with the given scalar value.
 
         Args:
-            TODO
+            other (int | float): Scalar, numerical value to be used for element-wise multiplication.
 
         Returns:
-            TODO
-        
-        Raises:
-            TODO
+            New Tensor object with the multiplied Tensor.
         '''
         out_data = self.data * other
         out = Tensor(out_data,
@@ -98,17 +93,17 @@ class Tensor:
         '''Getter for dtype.'''
         return self.dtype
 
-    def view(self, new_shape):
+    def view(self, new_shape: tuple):
         '''Function to return a different view on the same data.
         
         Args:
-            TODO
+            new_shape (tuple): The shape for the view.
 
         Returns:
-            TODO
+            New Tensor object with new_shape as shape but reference to the same data and grads.
         
         Raises:
-            TODO
+            ValueError if new_shape is not compatible to the data.
         '''
         if math.product(new_shape) != math.product(self.shape):
             raise ValueError('Shape of data and new_shape and not compatible!')
@@ -121,17 +116,19 @@ class Tensor:
         '''Function to set the tensors grad to zero.'''
         self._grads = np.zeros_like(self._grads)
 
-    def _set_data(data: np.ndarray, shape: tuple, grads: bool):
+    def _set_data(data: np.ndarray, shape: tuple, grads: np.ndarray):
         '''Function to return a correct data ndarray and handle shape representation.
 
         Args:
-            TODO
+            data (np.ndarray): Array with the data to be represented in Tensor object.
+            shape (tuple): Shape to be used for the Tensor object.
+            grads (np.ndarray): Indicates if Tensor object is referencing to data and grads of other Tensor object.
 
         Returns:
-            TODO
+            A one-dimensional numpy array containing the elements from data. If grads != None it just returns the input data array.
         
         Raises:
-            TODO
+            ValueError if shape of data and shape and are not compatible.
         '''
         number_total_elements = math.prod(shape)
         if not grads:

@@ -10,7 +10,7 @@ class Tensor:
         self.requires_grad = requires_grad
         self.shape = shape
         self._backward = lambda: None
-        self._grads = _grads if _grads else np.zeros_like(self.data)
+        self._grads = _grads if _grads else np.ones_like(self.data, dtype=self.dtype)
         self._children = _children
         self._op = _op
 
@@ -34,7 +34,9 @@ class Tensor:
             raise ValueError('Shapes do not match!')
 
         out_data = self.data + other.data
-        out = Tensor(out_data,
+        out_dtype = np.result_type(self.dtype, other.dtype)
+        out = Tensor(data=out_data,
+                    dtype=out_dtype,
                     requires_grad=(self.requires_grad or other.requires_grad),
                     _children=(self, other),
                     _op='+')
@@ -61,7 +63,9 @@ class Tensor:
             New Tensor object with the multiplied Tensor.
         '''
         out_data = self.data * other
-        out = Tensor(out_data,
+        out_dtype = np.result_type(self.dtype, type(other))
+        out = Tensor(data=out_data,
+                    dtype=out_dtype,
                     requires_grad=self.requires_grad,
                     _children=(self, ),
                     _op='*')
@@ -73,6 +77,29 @@ class Tensor:
 
         if out.requires_grad:
             out._backward = _backward
+
+        return out
+    
+    def __pow__(self, other: int | float):
+        '''Performs power operation on the tensor with the given scalar value.
+
+        Args:
+            other (int | float): Scalar, numerical value to be used as exponent.
+
+        Returns:
+            New Tensor object with the exponentiated Tensor.
+        '''
+        out_data = self.data**other
+        out_dtype = np.result_type(self.dtype, type(other))
+        out = Tensor(data=out_data,
+                    dtype=out_dtype,
+                    requires_grad=self.requires_grad,
+                    _children=(self, ),
+                    _op='**')
+
+        def _backward():
+            self.grad += (other * self.data**(other-1)) * out.grad
+        out._backward = _backward
 
         return out
     
@@ -111,6 +138,20 @@ class Tensor:
 
     def backward(self):
         '''Function to perform the backward pass.'''
+        # Sort performed operations in topological order
+        operations = []
+        visited_operations = set()
+        def sort_topological(operation):
+            if operation not in visited_operations:
+                visited_operations.add(operation)
+                for child in operation._prev:
+                    sort_topological(child)
+                operations.append(operation)
+        sort_topological(self)
+        
+        # Go backwards through the graph and apply chainrule
+        for operation in operations[::-1]:
+            operation._backward()
 
     def zero_grad(self):
         '''Function to set the tensors grad to zero.'''

@@ -1,3 +1,4 @@
+from __future__ import annotations
 import numpy as np
 import math
 
@@ -5,18 +6,20 @@ class Tensor:
     '''A simple tensor class that supports basic operations.'''
 
     def __init__(self, data: np.ndarray, dtype: np.dtype, requires_grad: bool, shape: tuple, _grads: np.ndarray = None, _children: set = (), _op: str = ''):
-        self.data = self.__set_data(data, dtype, shape, _grads)
-        self.dtype = dtype
+        self.data = self._set_data(data, dtype, shape, _grads)
+        print(self.data)
         self.requires_grad = requires_grad
-        self.shape = shape
+        if math.prod(shape) != len(data):
+            raise ValueError('Shape of data and new shape and not compatible!')
+        self._shape = shape
         self._backward = lambda: None
-        self._grads = _grads if _grads else np.ones_like(self.data, dtype=self.dtype)
+        self._grads = _grads if _grads else np.ones_like(self.data, dtype=dtype)
         self._children = _children
         self._op = _op
 
     def __repr__(self):
         '''Function that returns a nice string representation of the tensor object.'''
-        return f"Tensor(data={self.data.view(self.shape)}, dtype={self.dtype}, requires_grad={self.requires_grad}, shape={self.shape}"
+        return f"Tensor(data={self.data.reshape(self.shape)}, dtype={self.data.dtype}, requires_grad={self.requires_grad}, shape={self._shape}"
 
     def __add__(self, other: Tensor):
         '''Performs elementwise addtion for the two given tensors.
@@ -106,19 +109,19 @@ class Tensor:
     @property
     def shape(self):
         '''Getter for shape.'''
-        return self.shape
+        return self._shape
     
     @shape.setter
     def shape(self, value: tuple):
         '''Setter for shape, checks compatability.'''
-        if math.product(value) != math.product(self.shape):
+        if math.prod(value) != len(self.data):
             raise ValueError('Shape of data and new shape and not compatible!')
-        self.shape = value
+        self._shape = value
 
     @property
     def dtype():
         '''Getter for dtype.'''
-        return self.dtype
+        return self.data.dtype
 
     def view(self, new_shape: tuple):
         '''Function to return a different view on the same data.
@@ -132,7 +135,7 @@ class Tensor:
         Raises:
             ValueError if new_shape is not compatible to the data.
         '''
-        if math.product(new_shape) != math.product(self.shape):
+        if math.prod(new_shape) != math.prod(self.shape):
             raise ValueError('Shape of data and new_shape and not compatible!')
         return Tensor(data=self.data, requires_grad=self.requires_grad, shape=new_shape, _grads=self._grads)
 
@@ -157,7 +160,7 @@ class Tensor:
         '''Function to set the tensors grad to zero.'''
         self._grads = np.zeros_like(self._grads)
 
-    def _set_data(data: np.ndarray, shape: tuple, grads: np.ndarray):
+    def _set_data(self, data: np.ndarray, dtype: np.dtype, shape: tuple, grads: np.ndarray):
         '''Function to return a correct data ndarray and handle shape representation.
 
         Args:

@@ -23,6 +23,7 @@ dev = [
     "pytest-cov",
     "ruff",
     "mypy",
+    "pre-commit",
 ]
 
 [project.urls]

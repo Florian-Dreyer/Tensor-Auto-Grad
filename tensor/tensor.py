@@ -24,7 +24,9 @@ class Tensor:
             raise ValueError('Shape of data and new shape and not compatible!')
         self._shape = shape
         self._backward = lambda: None
-        self._grads = _grads if _grads.shape[0] > 0 else np.ones_like(self.data, dtype=dtype)
+        self._grads = (
+            _grads if _grads.shape[0] > 0 else np.ones_like(self.data, dtype=dtype)
+        )
         self._children = _children
         self._op = _op
 

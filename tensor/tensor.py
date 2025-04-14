@@ -158,6 +158,11 @@ class Tensor:
         """Getter for dtype."""
         return self.data.dtype
 
+    @property
+    def grad(self):
+        """Getter for grad."""
+        return self._grads
+
     def view(self, new_shape: tuple):
         """Function to return a different view on the same data.
 
@@ -230,3 +235,6 @@ class Tensor:
             raise ValueError('Shape of data and shape and not compatible!')
 
         return data
+
+
+print('Test')

@@ -25,7 +25,7 @@ class Tensor:
         self._shape = shape
         self._backward = lambda: None
         self._grads = (
-            _grads if _grads.shape[0] > 0 else np.ones_like(self.data, dtype=dtype)
+            _grads if _grads.size > 0 else np.zeros_like(self.data, dtype=dtype)
         )
         self._children = _children
         self._op = _op
@@ -229,12 +229,9 @@ class Tensor:
         """
         data = np.array(data)
         number_total_elements = math.prod(shape)
-        if not grads:
+        if grads.size == 0 or grads == None:
             data = data.flatten().astype(dtype)
         if number_total_elements != len(data):
             raise ValueError('Shape of data and shape and not compatible!')
 
         return data
-
-
-print('Test')

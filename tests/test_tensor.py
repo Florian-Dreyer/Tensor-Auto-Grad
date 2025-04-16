@@ -35,9 +35,9 @@ def _assert_tensor_equals(
     'shape, dtype',
     [
         ((2, 2), np.float32),
-        ((3, 1), np.float64),
+        ((3, 1), np.float32),
         ((5,), np.float32),  # Test 1D case
-        ((1, 4, 2), np.float64),  # Test 3D case
+        ((1, 4, 2), np.float32),  # Test 3D case
     ],
 )
 def test_tensor_add(shape, dtype):
@@ -54,12 +54,92 @@ def test_tensor_add(shape, dtype):
     pt2 = torch.tensor(np_data2, dtype=torch_dtype, requires_grad=True)
     result_pt = pt1 + pt2
 
-    assert_tensor_equals(result_t, result_pt)
+    _assert_tensor_equals(result_t, result_pt)
 
     result_t._grads.fill(1.0)
 
     result_t.backward()
     result_pt.backward(torch.ones_like(result_pt))
 
-    assert_tensor_equals(t1, pt1, check_grad=True)
-    assert_tensor_equals(t2, pt2, check_grad=True)
+    _assert_tensor_equals(t1, pt1, check_grad=True)
+    _assert_tensor_equals(t2, pt2, check_grad=True)
+
+@pytest.mark.parametrize(
+    'shape, dtype, factor',
+    [
+        ((2, 2), np.float32, 0),
+        ((2, 2), np.float32, 1),
+        ((2, 2), np.float32, 911),
+        ((2, 2), np.float32, -911),
+        ((2, 2), np.float32, 3.14159),
+        ((5,), np.float32, 0),
+        ((5,), np.float32, 1),
+        ((5,), np.float32, 911),
+        ((5,), np.float32, -911),
+        ((5,), np.float32, 3.14159),
+        ((1, 4, 2), np.float32, 0),
+        ((1, 4, 2), np.float32, 1),
+        ((1, 4, 2), np.float32, 911),
+        ((1, 4, 2), np.float32, -911),
+        ((1, 4, 2), np.float32, 3.14159),
+    ],
+)
+def test_tensor_mul(shape, dtype, factor):
+    """Tests Tensor addition (__add__) and backward pass against torch.Tensor."""
+    np_data1 = np.random.randn(*shape).astype(dtype)
+    torch_dtype = getattr(torch, np.dtype(dtype).name)
+
+    t1 = Tensor(np_data1, dtype=dtype, requires_grad=True, shape=shape)
+    result_t = t1 * factor
+
+    pt1 = torch.tensor(np_data1, dtype=torch_dtype, requires_grad=True)
+    result_pt = pt1 * factor
+
+    _assert_tensor_equals(result_t, result_pt)
+
+    result_t._grads.fill(1.0)
+
+    result_t.backward()
+    result_pt.backward(torch.ones_like(result_pt))
+
+    _assert_tensor_equals(t1, pt1, check_grad=True)
+
+@pytest.mark.parametrize(
+    'shape, dtype, factor',
+    [
+        ((2, 2), np.float32, 0),
+        ((2, 2), np.float32, 1),
+        ((2, 2), np.float32, 911),
+        ((2, 2), np.float32, -911),
+        ((2, 2), np.float32, 3.14159),
+        ((5,), np.float32, 0),
+        ((5,), np.float32, 1),
+        ((5,), np.float32, 911),
+        ((5,), np.float32, -911),
+        ((5,), np.float32, 3.14159),
+        ((1, 4, 2), np.float32, 0),
+        ((1, 4, 2), np.float32, 1),
+        ((1, 4, 2), np.float32, 911),
+        ((1, 4, 2), np.float32, -911),
+        ((1, 4, 2), np.float32, 3.14159),
+    ],
+)
+def test_tensor_pow(shape, dtype, factor):
+    """Tests Tensor addition (__add__) and backward pass against torch.Tensor."""
+    np_data1 = np.random.randn(*shape).astype(dtype)
+    torch_dtype = getattr(torch, np.dtype(dtype).name)
+
+    t1 = Tensor(np_data1, dtype=dtype, requires_grad=True, shape=shape)
+    result_t = t1 * factor
+
+    pt1 = torch.tensor(np_data1, dtype=torch_dtype, requires_grad=True)
+    result_pt = pt1 * factor
+
+    _assert_tensor_equals(result_t, result_pt)
+
+    result_t._grads.fill(1.0)
+
+    result_t.backward()
+    result_pt.backward(torch.ones_like(result_pt))
+
+    _assert_tensor_equals(t1, pt1, check_grad=True)

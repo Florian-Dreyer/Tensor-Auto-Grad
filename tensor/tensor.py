@@ -25,19 +25,24 @@ class Tensor:
         self._shape = shape
         self._backward = lambda: None
         self._grads = (
-            _grads if _grads.size > 0 else np.zeros_like(self.data, dtype=dtype)
+            _grads if _grads.size > 0 else np.zeros_like(self.data, dtype=np.float32)
         )
         self._children = _children
         self._op = _op
 
-    def __repr__(self):
+    def __repr__(
+        self,
+    ) -> str:
         """Function that returns a nice string representation of the tensor object."""
         return f"""Tensor(data={self.data.reshape(self.shape)},
                           dtype={self.data.dtype},
                           requires_grad={self.requires_grad},
                           shape={self._shape})"""
 
-    def __add__(self, other: Tensor):
+    def __add__(
+        self,
+        other: Tensor,
+    ) -> Tensor:
         """Performs elementwise addtion for the two given tensors.
 
         Args:
@@ -77,7 +82,10 @@ class Tensor:
 
         return out
 
-    def __mul__(self, other: int | float):
+    def __mul__(
+        self,
+        other: int | float,
+    ) -> Tensor:
         """Performs elementwise multiplication on the tensor with the given scalar.
 
         Args:
@@ -112,7 +120,10 @@ class Tensor:
 
         return out
 
-    def __pow__(self, other: int | float):
+    def __pow__(
+        self,
+        other: int | float,
+    ) -> Tensor:
         """Performs power operation on the tensor with the given scalar value.
 
         Args:
@@ -120,7 +131,13 @@ class Tensor:
 
         Returns:
             New Tensor object with the exponentiated Tensor.
+
+        Raises:
+            ValueError if some value in data < 0 and other not int.
         """
+        if np.any(self.data < 0) and not isinstance(other, int):
+            raise ValueError("Cant take the root of a negative number!")
+        
         out_data = self.data**other
         out_dtype = np.result_type(self.dtype, type(other))
         out = Tensor(
@@ -137,33 +154,99 @@ class Tensor:
         def _backward():
             self._grads += (other * self.data ** (other - 1)) * out._grads
 
-        out._backward = _backward
+        if out.requires_grad:
+            out._backward = _backward
+
+        return out
+    
+    def __matmul__(
+        self,
+        other: Tensor,
+    ) -> Tensor:
+        '''Performs matrix multiplication operation with self and given tensor.
+
+        Args:
+            other (Tensor): Scalar, numerical value to be used as exponent.
+
+        Returns:
+            New Tensor object with the matrix multiplication product.
+
+        Raises:
+            ValueError if shapes do not match (n x m) @ (m x k).
+        '''
+        if self.shape[1] != other.shape[0]:
+            raise ValueError("Shape mismatch!")
+        
+        if len(self.shape) != 2 or len(other.shape) != 2:
+            # For simplicity, let's stick to 2D matrices for now.
+            raise NotImplementedError("Matmul currently only supports 2D tensors.")
+        
+        self_shaped = self.data.reshape(self.shape)
+        other_shaped = other.data.reshape(other.shape)
+        out_data = self_shaped @ other_shaped
+        out_data = out_data.flatten()
+        out_dtype = np.result_type(self.dtype, type(other))
+        out_shape = (self.shape[0], other.shape[1])
+        out = Tensor(
+            data=out_data,
+            dtype=out_dtype,
+            requires_grad=(self.requires_grad or other.requires_grad),
+            shape=out_shape,
+            _children={
+                self,
+            },
+            _op='@',
+        )
+
+        def _backward():
+            dO = out.grad.reshape(out_shape)
+            if self.requires_grad:
+                dS = dO @ other_shaped.T
+                self._grads += dS.flatten()
+            if other.requires_grad:
+                dS = self_shaped.T @ dO
+                other._grads += dS.flatten()
+
+        if out.requires_grad:
+            out._backward = _backward
 
         return out
 
     @property
-    def shape(self):
+    def shape(
+        self,
+    ) -> tuple:
         """Getter for shape."""
         return self._shape
 
     @shape.setter
-    def shape(self, value: tuple):
+    def shape(
+        self,
+        value: tuple,
+    ):
         """Setter for shape, checks compatability."""
         if math.prod(value) != len(self.data):
             raise ValueError('Shape of data and new shape and not compatible!')
         self._shape = value
 
     @property
-    def dtype(self):
+    def dtype(
+        self,
+    ) -> np.dtype:
         """Getter for dtype."""
         return self.data.dtype
 
     @property
-    def grad(self):
+    def grad(
+        self,
+    ) -> np.ndarray:
         """Getter for grad."""
         return self._grads
 
-    def view(self, new_shape: tuple):
+    def view(
+        self,
+        new_shape: tuple,
+    ) -> Tensor:
         """Function to return a different view on the same data.
 
         Args:
@@ -186,7 +269,9 @@ class Tensor:
             _grads=self._grads,
         )
 
-    def backward(self):
+    def backward(
+        self,
+    ):
         """Function to perform the backward pass."""
         # Sort performed operations in topological order
         operations = []
@@ -205,13 +290,19 @@ class Tensor:
         for operation in operations[::-1]:
             operation._backward()
 
-    def zero_grad(self):
+    def zero_grad(
+        self,
+    ):
         """Function to set the tensors grad to zero."""
         self._grads = np.zeros_like(self._grads)
 
     def _set_data(
-        self, data: np.ndarray, dtype: np.dtype, shape: tuple, grads: np.ndarray
-    ):
+        self,
+        data: np.ndarray,
+        dtype: np.dtype,
+        shape: tuple,
+        grads: np.ndarray,
+    ) -> np.ndarray:
         """Function to return a correct data ndarray and handle shape representation.
 
         Args:
@@ -229,6 +320,7 @@ class Tensor:
         """
         data = np.array(data)
         number_total_elements = math.prod(shape)
+        # If grad is already set no need to flatten data
         if grads.size == 0 or grads == None:
             data = data.flatten().astype(dtype)
         if number_total_elements != len(data):

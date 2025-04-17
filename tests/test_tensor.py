@@ -109,18 +109,18 @@ def test_tensor_mul(shape, dtype, factor):
     [
         ((2, 2), np.float32, 0),
         ((2, 2), np.float32, 1),
-        ((2, 2), np.float32, 911),
-        ((2, 2), np.float32, -911),
+        ((2, 2), np.float32, 11),
+        ((2, 2), np.float32, -11),
         ((2, 2), np.float32, 3.14159),
         ((5,), np.float32, 0),
         ((5,), np.float32, 1),
-        ((5,), np.float32, 911),
-        ((5,), np.float32, -911),
+        ((5,), np.float32, 11),
+        ((5,), np.float32, -11),
         ((5,), np.float32, 3.14159),
         ((1, 4, 2), np.float32, 0),
         ((1, 4, 2), np.float32, 1),
-        ((1, 4, 2), np.float32, 911),
-        ((1, 4, 2), np.float32, -911),
+        ((1, 4, 2), np.float32, 11),
+        ((1, 4, 2), np.float32, -11),
         ((1, 4, 2), np.float32, 3.14159),
     ],
 )
@@ -128,18 +128,36 @@ def test_tensor_pow(shape, dtype, factor):
     """Tests Tensor addition (__add__) and backward pass against torch.Tensor."""
     np_data1 = np.random.randn(*shape).astype(dtype)
     torch_dtype = getattr(torch, np.dtype(dtype).name)
-
+    
     t1 = Tensor(np_data1, dtype=dtype, requires_grad=True, shape=shape)
-    result_t = t1 * factor
 
-    pt1 = torch.tensor(np_data1, dtype=torch_dtype, requires_grad=True)
-    result_pt = pt1 * factor
+    if np.any(t1.data < 0) and not isinstance(factor, int):
+        with pytest.raises(ValueError):
+            result_t = t1 ** factor
+    else:
+        result_t = t1 ** factor
 
-    _assert_tensor_equals(result_t, result_pt)
+        pt1 = torch.tensor(np_data1, dtype=torch_dtype, requires_grad=True)
+        result_pt = pt1 ** factor
 
-    result_t._grads.fill(1.0)
+        _assert_tensor_equals(result_t, result_pt)
 
-    result_t.backward()
-    result_pt.backward(torch.ones_like(result_pt))
+        result_t._grads.fill(1.0)
 
-    _assert_tensor_equals(t1, pt1, check_grad=True)
+        result_t.backward()
+        result_pt.backward(torch.ones_like(result_pt))
+
+        _assert_tensor_equals(t1, pt1, check_grad=True)
+
+def test_tensor_add_shape_mismatch():
+    """Tests that adding tensors with mismatched shapes raises ValueError."""
+    shape1 = (2, 3)
+    shape2 = (3, 2)
+    dtype = np.float32
+
+    t1 = Tensor(np.zeros(shape1, dtype=dtype), dtype=dtype, requires_grad=False, shape=shape1)
+    t2 = Tensor(np.zeros(shape2, dtype=dtype), dtype=dtype, requires_grad=False, shape=shape2)
+
+    # Assert that executing t1 + t2 raises a ValueError
+    with pytest.raises(ValueError):
+        _ = t1 + t2

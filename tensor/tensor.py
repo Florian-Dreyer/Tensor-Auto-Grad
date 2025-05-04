@@ -22,6 +22,7 @@ class Tensor:
         self.requires_grad = requires_grad
         if math.prod(shape) != len(self.data):
             raise ValueError('Shape of data and new shape and not compatible!')
+        self.strides = self.compute_strides(shape)
         self._shape = shape
         self._backward = lambda: None
         self._grads = (
@@ -29,6 +30,7 @@ class Tensor:
         )
         self._children = _children
         self._op = _op
+        self._max_dim = 2
 
     def __repr__(
         self,
@@ -38,6 +40,80 @@ class Tensor:
                           dtype={self.data.dtype},
                           requires_grad={self.requires_grad},
                           shape={self._shape})"""
+
+    @staticmethod
+    def compute_strides(
+        shape: tuple,
+    ) -> tuple:
+        """Function to compute strides for current shape.
+
+        Args:
+            shape (tuple): current shape of object.
+
+        Returns:
+            The strides for the given shape.
+        """
+        strides = []
+        stride = 1
+        for dim in reversed(shape):
+            strides.insert(0, stride)
+            stride *= dim
+        return tuple(strides)
+
+    def flatten_index(
+        self,
+        idx: tuple,
+    ) -> int:
+        """Flattens index from nd to 1d.
+
+        Args:
+            idx (tuple): nd index.
+
+        Returns:
+            Flattened index.
+        """
+        if len(idx) != len(self.shape):
+            raise IndexError('Wrong number of indices')
+        flat = 0
+        for i, s, st in zip(idx, self.shape, self.strides):
+            if not 0 <= i < s:
+                raise IndexError('Index out of bounds')
+            flat += i * st
+        return flat
+
+    def __getitem__(
+        self,
+        idx: tuple,
+    ) -> any:
+        """Implements tensor[idx] logic.
+
+        Args:
+            idx (tuple): Index to get element from.
+
+        Returns:
+            Elements at given index.
+        """
+        if isinstance(idx, int):
+            idx = (idx,)
+        return self.data[self.flatten_index(idx)]
+
+    def __setitem__(
+        self,
+        idx: tuple,
+        value: any,
+    ) -> None:
+        """Implements tensor[idx]=x logic.
+
+        Args:
+            idx (tuple): index to set element to.
+            value (self.data.dtype): element to set at index.
+
+        Returns:
+            None.
+        """
+        if isinstance(idx, int):
+            idx = (idx,)
+        self.data[self.flatten_index(idx)] = value
 
     def __add__(
         self,
@@ -136,8 +212,8 @@ class Tensor:
             ValueError if some value in data < 0 and other not int.
         """
         if np.any(self.data < 0) and not isinstance(other, int):
-            raise ValueError("Cant take the root of a negative number!")
-        
+            raise ValueError('Cant take the root of a negative number!')
+
         out_data = self.data**other
         out_dtype = np.result_type(self.dtype, type(other))
         out = Tensor(
@@ -158,12 +234,12 @@ class Tensor:
             out._backward = _backward
 
         return out
-    
+
     def __matmul__(
         self,
         other: Tensor,
     ) -> Tensor:
-        '''Performs matrix multiplication operation with self and given tensor.
+        """Performs matrix multiplication operation with self and given tensor.
 
         Args:
             other (Tensor): Scalar, numerical value to be used as exponent.
@@ -173,14 +249,14 @@ class Tensor:
 
         Raises:
             ValueError if shapes do not match (n x m) @ (m x k).
-        '''
+        """
         if self.shape[1] != other.shape[0]:
-            raise ValueError("Shape mismatch!")
-        
-        if len(self.shape) != 2 or len(other.shape) != 2:
-            # For simplicity, let's stick to 2D matrices for now.
-            raise NotImplementedError("Matmul currently only supports 2D tensors.")
-        
+            raise ValueError('Shape mismatch!')
+
+        if (len(self.shape) != self._max_dim) or (len(other.shape) != self._max_dim):
+            # For simplicity, only 2D matrices allowed for now.
+            raise NotImplementedError('Matmul currently only supports 2D tensors.')
+
         self_shaped = self.data.reshape(self.shape)
         other_shaped = other.data.reshape(other.shape)
         out_data = self_shaped @ other_shaped
@@ -321,7 +397,7 @@ class Tensor:
         data = np.array(data)
         number_total_elements = math.prod(shape)
         # If grad is already set no need to flatten data
-        if grads.size == 0 or grads == None:
+        if grads.size == 0 or grads is None:
             data = data.flatten().astype(dtype)
         if number_total_elements != len(data):
             raise ValueError('Shape of data and shape and not compatible!')

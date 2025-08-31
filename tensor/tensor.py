@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from typing import Any
 
 import numpy as np
 
@@ -53,14 +54,14 @@ class Tensor:
         Returns:
             The strides for the given shape.
         """
-        strides = []
+        strides: list[int] = []
         stride = 1
         for dim in reversed(shape):
             strides.insert(0, stride)
             stride *= dim
         return tuple(strides)
 
-    def flatten_index(
+    def _flatten_index(
         self,
         idx: tuple,
     ) -> int:
@@ -84,7 +85,7 @@ class Tensor:
     def __getitem__(
         self,
         idx: tuple,
-    ) -> any:
+    ) -> Any:
         """Implements tensor[idx] logic.
 
         Args:
@@ -95,12 +96,12 @@ class Tensor:
         """
         if isinstance(idx, int):
             idx = (idx,)
-        return self.data[self.flatten_index(idx)]
+        return self.data[self._flatten_index(idx)]
 
     def __setitem__(
         self,
         idx: tuple,
-        value: any,
+        value: Any,
     ) -> None:
         """Implements tensor[idx]=x logic.
 
@@ -113,7 +114,7 @@ class Tensor:
         """
         if isinstance(idx, int):
             idx = (idx,)
-        self.data[self.flatten_index(idx)] = value
+        self.data[self._flatten_index(idx)] = value
 
     def __add__(
         self,
@@ -158,6 +159,24 @@ class Tensor:
 
         return out
 
+    def __sub__(
+        self,
+        other: Tensor,
+    ) -> Tensor:
+        """Performs elementwise subtraction for the two given tensors.
+
+        Args:
+            other (Tensor): Other Tensor to be subtracted from self, needs to have
+                            same shape.
+
+        Returns:
+            New Tensor object with the difference of self and other.
+
+        Raises:
+            ValueError if the shape of other does not match the tensors shape
+        """
+        return self + (other * -1)
+
     def __mul__(
         self,
         other: int | float,
@@ -195,6 +214,25 @@ class Tensor:
             out._backward = _backward
 
         return out
+
+    def __truediv__(
+        self,
+        other: int | float,
+    ) -> Tensor:
+        """Performs elementwise division on the tensor with the given scalar.
+
+        Args:
+            other (int | float): Scalar, numerical value to be used as divisor.
+
+        Returns:
+            New Tensor object with the divided Tensor.
+
+        Raises:
+            ZeroDivisionError if other is zero.
+        """
+        if other == 0:
+            raise ZeroDivisionError('Division by zero!')
+        return self * (1 / other)
 
     def __pow__(
         self,
@@ -349,6 +387,9 @@ class Tensor:
         self,
     ):
         """Function to perform the backward pass."""
+        # Initialize gradient for the root tensor
+        self._grads = np.ones_like(self.data, dtype=np.float32)
+
         # Sort performed operations in topological order
         operations = []
         visited_operations = set()

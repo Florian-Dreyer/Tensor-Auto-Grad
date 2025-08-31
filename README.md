@@ -8,7 +8,7 @@ This project implements a custom `Tensor` class with support for basic tensor op
 ## ✨ Features
 
 - 🧮 **Tensor data structure** based on `numpy.ndarray`  
-- ➕ Basic operators: `+`, `-`, `*`, `/`, `**`, `@` (matrix multiplication)  
+- ➕ Basic operators: `+`, `-`, `*`, `/`, `**`, `@`
 - 🔄 **Indexing & views** (`tensor[i, j]`, `tensor.view(new_shape)`)  
 - 🧩 Automatic **gradient tracking** (similar to PyTorch’s Autograd)  
 - 📈 Backpropagation with `backward()`  
@@ -50,7 +50,7 @@ print(a)
 ```python
 c = a + b
 d = a * 2
-e = a @ b  # Matrix multiplication
+e = a @ b
 ```
 
 ---

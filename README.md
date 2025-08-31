@@ -22,7 +22,7 @@ This project implements a custom `Tensor` class with support for basic tensor op
 Clone the repository and install locally (including development dependencies for linting and testing):
 
 ```bash
-git clone https://github.com/<your-username>/Tensor-Auto-Grad.git
+git clone https://github.com/Florian-Dreyer/Tensor-Auto-Grad.git
 cd Tensor-Auto-Grad
 pip install -e .[dev]
 ```

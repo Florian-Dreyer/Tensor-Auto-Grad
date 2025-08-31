@@ -3,11 +3,11 @@
 import numpy as np
 import torch
 
-from tensor import tensor
+from tensor import Tensor
 
 
 def _assert_tensor_equals(
-    custom_tensor: tensor.Tensor, torch_tensor: torch.Tensor, check_grad: bool = False
+    custom_tensor: Tensor, torch_tensor: torch.Tensor, check_grad: bool = False
 ):
     """Compares custom Tensor data and grads (if requested) with a PyTorch tensor."""
     # data
@@ -35,8 +35,8 @@ def _assert_tensor_equals(
 def test_backward_pass():
     """Tests complete backward pass through computation graph."""
     # Create a simple computation: (a + b) * c
-    a = tensor.Tensor(np.array([[1.0, 2.0], [3.0, 4.0]]), np.float32, True, (2, 2))
-    b = tensor.Tensor(np.array([[0.5, 1.0], [1.5, 2.0]]), np.float32, True, (2, 2))
+    a = Tensor(np.array([[1.0, 2.0], [3.0, 4.0]]), np.float32, True, (2, 2))
+    b = Tensor(np.array([[0.5, 1.0], [1.5, 2.0]]), np.float32, True, (2, 2))
     c = 2.0
 
     # Compute (a + b) * c
@@ -65,7 +65,7 @@ def test_backward_pass():
 
 def test_zero_grad():
     """Tests zero_grad method."""
-    t = tensor.Tensor(np.array([[1.0, 2.0], [3.0, 4.0]]), np.float32, True, (2, 2))
+    t = Tensor(np.array([[1.0, 2.0], [3.0, 4.0]]), np.float32, True, (2, 2))
 
     # Set some gradients
     t._grads = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=np.float32).flatten()
@@ -82,8 +82,8 @@ def test_zero_grad():
 
 def test_gradient_accumulation():
     """Tests that gradients accumulate correctly across multiple backward passes."""
-    a = tensor.Tensor(np.array([[1.0, 2.0]]), np.float32, True, (1, 2))
-    b = tensor.Tensor(np.array([[0.5, 1.0]]), np.float32, True, (1, 2))
+    a = Tensor(np.array([[1.0, 2.0]]), np.float32, True, (1, 2))
+    b = Tensor(np.array([[0.5, 1.0]]), np.float32, True, (1, 2))
 
     # First computation
     result1 = a + b
@@ -107,8 +107,8 @@ def test_gradient_accumulation():
 
 def test_computation_graph():
     """Tests that computation graph is built correctly."""
-    a = tensor.Tensor(np.array([[1.0]]), np.float32, True, (1, 1))
-    b = tensor.Tensor(np.array([[2.0]]), np.float32, True, (1, 1))
+    a = Tensor(np.array([[1.0]]), np.float32, True, (1, 1))
+    b = Tensor(np.array([[2.0]]), np.float32, True, (1, 1))
 
     # Build computation graph
     c = a + b
@@ -129,8 +129,8 @@ def test_computation_graph():
 
 def test_backward_without_gradients():
     """Tests backward pass when requires_grad=False."""
-    a = tensor.Tensor(np.array([[1.0, 2.0]]), np.float32, False, (1, 2))
-    b = tensor.Tensor(np.array([[0.5, 1.0]]), np.float32, True, (1, 2))
+    a = Tensor(np.array([[1.0, 2.0]]), np.float32, False, (1, 2))
+    b = Tensor(np.array([[0.5, 1.0]]), np.float32, True, (1, 2))
 
     result = a + b
 
@@ -145,8 +145,8 @@ def test_backward_without_gradients():
 def test_complex_computation_graph():
     """Tests a more complex computation graph."""
     # Create tensors
-    x = tensor.Tensor(np.array([[1.0, 2.0], [3.0, 4.0]]), np.float32, True, (2, 2))
-    y = tensor.Tensor(np.array([[0.5, 1.0], [1.5, 2.0]]), np.float32, True, (2, 2))
+    x = Tensor(np.array([[1.0, 2.0], [3.0, 4.0]]), np.float32, True, (2, 2))
+    y = Tensor(np.array([[0.5, 1.0], [1.5, 2.0]]), np.float32, True, (2, 2))
 
     # Complex computation: ((x + y) * 2.0) ** 2
     result = ((x + y) * 2.0) ** 2
@@ -174,8 +174,8 @@ def test_complex_computation_graph():
 
 def test_backward_initialization():
     """Tests that backward properly initializes gradients."""
-    a = tensor.Tensor(np.array([[1.0, 2.0]]), np.float32, True, (1, 2))
-    b = tensor.Tensor(np.array([[0.5, 1.0]]), np.float32, True, (1, 2))
+    a = Tensor(np.array([[1.0, 2.0]]), np.float32, True, (1, 2))
+    b = Tensor(np.array([[0.5, 1.0]]), np.float32, True, (1, 2))
 
     result = a + b
 
@@ -195,8 +195,8 @@ def test_backward_initialization():
 
 def test_multiple_backward_calls():
     """Tests that multiple backward calls work correctly."""
-    a = tensor.Tensor(np.array([[1.0]]), np.float32, True, (1, 1))
-    b = tensor.Tensor(np.array([[2.0]]), np.float32, True, (1, 1))
+    a = Tensor(np.array([[1.0]]), np.float32, True, (1, 1))
+    b = Tensor(np.array([[2.0]]), np.float32, True, (1, 1))
 
     result = a + b
 

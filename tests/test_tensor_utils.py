@@ -3,44 +3,44 @@
 import numpy as np
 import pytest
 
-from tensor import tensor
+from tensor import Tensor
 
 
 def test_compute_strides():
     """Tests compute_strides static method."""
     # Test 1D tensor
-    strides_1d = tensor.Tensor.compute_strides((5,))
+    strides_1d = Tensor.compute_strides((5,))
     assert strides_1d == (1,)
 
     # Test 2D tensor
-    strides_2d = tensor.Tensor.compute_strides((2, 3))
+    strides_2d = Tensor.compute_strides((2, 3))
     assert strides_2d == (3, 1)
 
     # Test 3D tensor
-    strides_3d = tensor.Tensor.compute_strides((2, 3, 4))
+    strides_3d = Tensor.compute_strides((2, 3, 4))
     assert strides_3d == (12, 4, 1)
 
     # Test 4D tensor
-    strides_4d = tensor.Tensor.compute_strides((2, 3, 4, 5))
+    strides_4d = Tensor.compute_strides((2, 3, 4, 5))
     assert strides_4d == (60, 20, 5, 1)
 
 
 def test_compute_strides_edge_cases():
     """Tests compute_strides with edge cases."""
     # Test single element
-    strides_single = tensor.Tensor.compute_strides((1,))
+    strides_single = Tensor.compute_strides((1,))
     assert strides_single == (1,)
 
     # Test empty shape (should not happen in practice)
     # This actually works with the current implementation
-    strides_empty = tensor.Tensor.compute_strides(())
+    strides_empty = Tensor.compute_strides(())
     assert strides_empty == ()
 
 
 def test_flatten_index():
     """Tests _flatten_index method."""
     data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, False, (2, 3))
+    t = Tensor(data, np.float32, False, (2, 3))
 
     # Test valid indices
     assert t._flatten_index((0, 0)) == 0
@@ -54,7 +54,7 @@ def test_flatten_index():
 def test_flatten_index_3d():
     """Tests _flatten_index with 3D tensor."""
     data = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, False, (2, 2, 2))
+    t = Tensor(data, np.float32, False, (2, 2, 2))
 
     # Test valid indices
     assert t._flatten_index((0, 0, 0)) == 0
@@ -70,7 +70,7 @@ def test_flatten_index_3d():
 def test_flatten_index_errors():
     """Tests _flatten_index error conditions."""
     data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, False, (2, 3))
+    t = Tensor(data, np.float32, False, (2, 3))
 
     # Test wrong number of indices
     with pytest.raises(IndexError):
@@ -98,7 +98,7 @@ def test_set_data_basic():
     grads = np.array([])
 
     # Create a temporary tensor to test _set_data
-    temp_tensor = tensor.Tensor(data, dtype, False, shape)
+    temp_tensor = Tensor(data, dtype, False, shape)
     result = temp_tensor._set_data(data, dtype, shape, grads)
     expected = np.array([1, 2, 3, 4], dtype=np.float32)
     np.testing.assert_array_equal(result, expected)
@@ -112,7 +112,7 @@ def test_set_data_with_grads():
     grads = np.array([0.1, 0.2, 0.3, 0.4], dtype=np.float32)
 
     # Create a temporary tensor to test _set_data
-    temp_tensor = tensor.Tensor(data, dtype, False, shape)
+    temp_tensor = Tensor(data, dtype, False, shape)
     result = temp_tensor._set_data(data, dtype, shape, grads)
     expected = np.array([1, 2, 3, 4], dtype=np.float32)
     np.testing.assert_array_equal(result, expected)
@@ -125,7 +125,7 @@ def test_set_data_dtype_conversion():
     dtype = np.float32
     grads = np.array([])
 
-    temp_tensor = tensor.Tensor(data, dtype, False, shape)
+    temp_tensor = Tensor(data, dtype, False, shape)
     result = temp_tensor._set_data(data, dtype, shape, grads)
     expected = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float32)
     np.testing.assert_array_equal(result, expected)
@@ -138,7 +138,7 @@ def test_set_data_shape_validation():
     dtype = np.float32
     grads = np.array([])
 
-    temp_tensor = tensor.Tensor(data, dtype, False, (4,))
+    temp_tensor = Tensor(data, dtype, False, (4,))
     with pytest.raises(ValueError):
         temp_tensor._set_data(data, dtype, shape, grads)
 
@@ -150,7 +150,7 @@ def test_set_data_3d():
     dtype = np.float32
     grads = np.array([])
 
-    temp_tensor = tensor.Tensor(data, dtype, False, shape)
+    temp_tensor = Tensor(data, dtype, False, shape)
     result = temp_tensor._set_data(data, dtype, shape, grads)
     expected = np.array([1, 2, 3, 4, 5, 6, 7, 8], dtype=np.float32)
     np.testing.assert_array_equal(result, expected)
@@ -163,7 +163,7 @@ def test_set_data_1d():
     dtype = np.float32
     grads = np.array([])
 
-    temp_tensor = tensor.Tensor(data, dtype, False, shape)
+    temp_tensor = Tensor(data, dtype, False, shape)
     result = temp_tensor._set_data(data, dtype, shape, grads)
     expected = np.array([1, 2, 3, 4], dtype=np.float32)
     np.testing.assert_array_equal(result, expected)
@@ -176,7 +176,7 @@ def test_set_data_with_none_grads():
     dtype = np.float32
     grads = None
 
-    temp_tensor = tensor.Tensor(data, dtype, False, shape)
+    temp_tensor = Tensor(data, dtype, False, shape)
     result = temp_tensor._set_data(data, dtype, shape, grads)
     expected = np.array([1, 2, 3, 4], dtype=np.float32)
     np.testing.assert_array_equal(result, expected)
@@ -186,7 +186,7 @@ def test_strides_calculation_verification():
     """Tests that strides calculation is mathematically correct."""
     # Test with a 2x3x4 tensor
     shape = (2, 3, 4)
-    strides = tensor.Tensor.compute_strides(shape)
+    strides = Tensor.compute_strides(shape)
 
     # Manually verify strides
     # For shape (2, 3, 4):
@@ -198,7 +198,7 @@ def test_strides_calculation_verification():
 
     # Verify that strides work correctly for indexing
     data = np.arange(24).reshape(2, 3, 4)
-    t = tensor.Tensor(data, np.float32, False, (2, 3, 4))
+    t = Tensor(data, np.float32, False, (2, 3, 4))
 
     # Test a few indices
     assert t._flatten_index((0, 0, 0)) == 0
@@ -211,7 +211,7 @@ def test_strides_calculation_verification():
 def test_flatten_index_consistency():
     """Tests that flatten_index is consistent with numpy's ravel_multi_index."""
     data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, False, (2, 3))
+    t = Tensor(data, np.float32, False, (2, 3))
 
     # Test several indices
     test_indices = [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)]
@@ -229,7 +229,7 @@ def test_set_data_preserves_data():
     dtype = np.float32
     grads = np.array([])
 
-    temp_tensor = tensor.Tensor(original_data, dtype, False, shape)
+    temp_tensor = Tensor(original_data, dtype, False, shape)
     flattened_data = temp_tensor._set_data(original_data, dtype, shape, grads)
 
     # Reshape back and compare

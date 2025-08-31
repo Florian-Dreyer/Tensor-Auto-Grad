@@ -3,13 +3,13 @@
 import numpy as np
 import pytest
 
-from tensor import tensor
+from tensor import Tensor
 
 
 def test_tensor_getitem():
     """Tests Tensor indexing (__getitem__) with various indices."""
     data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, False, (2, 3))
+    t = Tensor(data, np.float32, False, (2, 3))
 
     # Test single element access
     assert t[0, 0] == 1.0
@@ -23,7 +23,7 @@ def test_tensor_getitem():
 def test_tensor_setitem():
     """Tests Tensor assignment (__setitem__) with various indices."""
     data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, False, (2, 3))
+    t = Tensor(data, np.float32, False, (2, 3))
 
     # Test setting single elements
     t[0, 0] = 10.0
@@ -40,7 +40,7 @@ def test_tensor_setitem():
 def test_tensor_indexing_errors():
     """Tests that invalid indexing raises appropriate errors."""
     data = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, False, (2, 3))
+    t = Tensor(data, np.float32, False, (2, 3))
 
     # Test wrong number of indices
     with pytest.raises(IndexError):
@@ -63,7 +63,7 @@ def test_tensor_indexing_errors():
 def test_tensor_view():
     """Tests Tensor view method with various shapes."""
     data = np.array([[1, 2, 3, 4], [5, 6, 7, 8]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, True, (2, 4))
+    t = Tensor(data, np.float32, True, (2, 4))
 
     # Test reshaping to different 2D shape
     t_view = t.view((4, 2))
@@ -85,7 +85,7 @@ def test_tensor_view():
 def test_tensor_view_invalid_shape():
     """Tests that view with incompatible shape raises ValueError."""
     data = np.array([[1, 2, 3, 4], [5, 6, 7, 8]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, False, (2, 4))
+    t = Tensor(data, np.float32, False, (2, 4))
 
     # Test incompatible shape (wrong total elements)
     with pytest.raises(ValueError):
@@ -98,7 +98,7 @@ def test_tensor_view_invalid_shape():
 def test_tensor_view_gradient_preservation():
     """Tests that view preserves gradients correctly."""
     data = np.array([[1, 2], [3, 4]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, True, (2, 2))
+    t = Tensor(data, np.float32, True, (2, 2))
 
     # Set some gradients
     t._grads = np.array([0.1, 0.2, 0.3, 0.4], dtype=np.float32)
@@ -119,7 +119,7 @@ def test_tensor_view_gradient_preservation():
 def test_tensor_indexing_with_gradients():
     """Tests that indexing works correctly with gradients."""
     data = np.array([[1, 2], [3, 4]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, True, (2, 2))
+    t = Tensor(data, np.float32, True, (2, 2))
 
     # Set gradients
     t._grads = np.array([0.1, 0.2, 0.3, 0.4], dtype=np.float32)
@@ -133,7 +133,7 @@ def test_tensor_indexing_with_gradients():
 def test_tensor_setitem_with_gradients():
     """Tests that setitem works correctly with gradients."""
     data = np.array([[1, 2], [3, 4]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, True, (2, 2))
+    t = Tensor(data, np.float32, True, (2, 2))
 
     # Set gradients
     t._grads = np.array([0.1, 0.2, 0.3, 0.4], dtype=np.float32)
@@ -149,12 +149,12 @@ def test_tensor_setitem_with_gradients():
 def test_tensor_view_requires_grad():
     """Tests that view preserves requires_grad attribute."""
     data = np.array([[1, 2], [3, 4]], dtype=np.float32)
-    t = tensor.Tensor(data, np.float32, True, (2, 2))
+    t = Tensor(data, np.float32, True, (2, 2))
 
     t_view = t.view((4,))
     assert t_view.requires_grad == t.requires_grad
 
     # Test with requires_grad=False
-    t_no_grad = tensor.Tensor(data, np.float32, False, (2, 2))
+    t_no_grad = Tensor(data, np.float32, False, (2, 2))
     t_no_grad_view = t_no_grad.view((4,))
     assert t_no_grad_view.requires_grad == t_no_grad.requires_grad

@@ -34,6 +34,7 @@ dev = [
 
 [tool.ruff]
 line-length = 88
+required-version = "0.4.4"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "PL", "PT"]

@@ -73,8 +73,15 @@ class Tensor:
         Returns:
             Flattened index.
         """
-        if len(idx) != len(self.shape):
+        if len(idx) == 1 and len(self.shape) > 1:
+            # Single index for multi-dimensional tensor - treat as flattened index
+            i = idx[0]
+            if not 0 <= i < len(self.data):
+                raise IndexError('Index out of bounds')
+            return i
+        elif len(idx) != len(self.shape):
             raise IndexError('Wrong number of indices')
+
         flat = 0
         for i, s, st in zip(idx, self.shape, self.strides):
             if not 0 <= i < s:
@@ -375,13 +382,20 @@ class Tensor:
         """
         if math.prod(new_shape) != math.prod(self.shape):
             raise ValueError('Shape of data and new_shape and not compatible!')
-        return Tensor(
-            data=self.data,
-            requires_grad=self.requires_grad,
-            shape=new_shape,
-            dtype=self.dtype,
-            _grads=self._grads,
-        )
+
+        # Create a new tensor that shares the same data and gradients
+        view_tensor = Tensor.__new__(Tensor)
+        view_tensor.data = self.data
+        view_tensor.requires_grad = self.requires_grad
+        view_tensor._shape = new_shape
+        view_tensor.strides = self.compute_strides(new_shape)
+        view_tensor._backward = lambda: None
+        view_tensor._grads = self._grads
+        view_tensor._children = set()
+        view_tensor._op = ''
+        view_tensor._max_dim = 2
+
+        return view_tensor
 
     def backward(
         self,
@@ -437,10 +451,16 @@ class Tensor:
         """
         data = np.array(data)
         number_total_elements = math.prod(shape)
-        # If grad is already set no need to flatten data
-        if grads.size == 0 or grads is None:
-            data = data.flatten().astype(dtype)
-        if number_total_elements != len(data):
-            raise ValueError('Shape of data and shape and not compatible!')
 
-        return data
+        # If grads is already set (not empty), don't flatten data
+        if grads is not None and grads.size > 0:
+            # Data should already be flattened
+            if number_total_elements != len(data):
+                raise ValueError('Shape of data and shape and not compatible!')
+            return data.astype(dtype)
+        else:
+            # Flatten data for new tensors
+            data = data.flatten().astype(dtype)
+            if number_total_elements != len(data):
+                raise ValueError('Shape of data and shape and not compatible!')
+            return data

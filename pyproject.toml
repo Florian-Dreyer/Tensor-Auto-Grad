@@ -15,6 +15,7 @@ authors = [
 # Add runtime dependencies here, e.g.:
 dependencies = [
   "numpy>=1.24",
+  "torch>=2.0",
 ]
 
 [project.optional-dependencies]
@@ -24,6 +25,7 @@ dev = [
     "ruff",
     "mypy",
     "pre-commit",
+    "jupyter",
 ]
 
 [project.urls]
@@ -32,8 +34,10 @@ dev = [
 
 [tool.ruff]
 line-length = 88
+
+[tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "PL", "PT"]
-ignore = []
+ignore = ["PLR2004", "PT011"]
 
 [tool.ruff.format]
 quote-style = "single"
@@ -41,7 +45,7 @@ quote-style = "single"
 [tool.mypy]
 python_version = "3.10"
 exclude = ["^build/"]
-warn_return_any = true
+warn_return_any = false  # We use Any for indexing operations
 warn_unused_configs = true
 
 [tool.pytest.ini_options]
